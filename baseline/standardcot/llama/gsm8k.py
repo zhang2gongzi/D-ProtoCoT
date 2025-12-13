@@ -38,41 +38,9 @@ class GSM8KCoTEvaluator:
         print(f"模型加载完成，使用设备: {self.device}")
     
     def generate_cot_response(self, question, max_new_tokens=1024):
-        """生成CoT推理响应（加入GSM8K正负样例）"""
-        # 4个GSM8K正负样例（2正2反，覆盖加减乘除、应用题场景，强调分步计算）
-        gsm8k_examples = """
-### Math Reasoning Examples (Learn step-by-step calculation, avoid mistakes)
-Example 1 (Correct Reasoning - Addition & Multiplication):
-Question: A bakery makes 12 loaves of bread each hour. They work for 8 hours a day, 5 days a week. How many loaves do they make in a week?
-Reasoning: Step 1: Calculate loaves made per day. If they make 12 loaves per hour and work 8 hours, that's 12 × 8 = 96 loaves per day. Step 2: Calculate loaves per week. They work 5 days, so 96 × 5 = 480 loaves. Step 3: Verify the calculation—12×8=96 (correct), 96×5=480 (correct).
-Final Answer: 480
-
-Example 2 (Correct Reasoning - Subtraction & Division):
-Question: A store has 360 apples. They sell 144 apples on Monday and 96 apples on Tuesday. The remaining apples are divided equally into 8 baskets. How many apples are in each basket?
-Reasoning: Step 1: Calculate total apples sold. 144 (Monday) + 96 (Tuesday) = 240 apples sold. Step 2: Calculate remaining apples. 360 - 240 = 120 apples left. Step 3: Divide remaining apples into 8 baskets. 120 ÷ 8 = 15 apples per basket. Step 4: Check—144+96=240, 360-240=120, 120÷8=15 (all correct).
-Final Answer: 15
-
-Example 3 (Incorrect vs Correct Reasoning - Missing Step):
-Question: A train travels 60 miles per hour for 3 hours, then 45 miles per hour for 2 hours. What is the total distance traveled?
-Incorrect Reasoning: Add the speeds and multiply by total time: (60+45) × (3+2) = 105 × 5 = 525 miles.
-Correct Reasoning: Step 1: Calculate distance for first part. Speed × time = 60 × 3 = 180 miles. Step 2: Calculate distance for second part. 45 × 2 = 90 miles. Step 3: Add both distances for total. 180 + 90 = 270 miles. The mistake in incorrect reasoning is mixing speed and time—total distance requires calculating each segment separately.
-Final Answer: 270
-
-Example 4 (Incorrect vs Correct Reasoning - Miscalculation):
-Question: Lily has $45. She buys 3 books that cost $8 each and a pen that costs $5. How much money does she have left?
-Incorrect Reasoning: Cost of books: 3 × 8 = 24. Total cost: 24 + 5 = 30. Money left: 45 - 30 = 25.
-Correct Reasoning: Step 1: Calculate book cost. 3 books × $8 = $24. Step 2: Add pen cost. $24 + $5 = $29 total spent. Step 3: Calculate remaining money. $45 - $29 = $16. The incorrect reasoning had a miscalculation in total cost (24+5=29, not 30) leading to wrong result.
-Final Answer: 16
-"""
-        
-        # 构建提示词（融入样例，强调分步计算和格式）
-        prompt = f"""{gsm8k_examples}
-
-Now solve the following math problem using the same step-by-step reasoning method. Show each calculation clearly, avoid missing steps or miscalculations, and end with "Final Answer: [number]" (only the number, no extra text).
-
-Question: {question}
-
-Step-by-step reasoning:"""
+        """生成CoT推理响应（使用简单的英文提示）"""
+        # 使用简洁的英文提示词
+        prompt = f"{question}\n\nLet's think step by step."
         
         # 生成响应
         try:
@@ -87,11 +55,6 @@ Step-by-step reasoning:"""
             )
             
             response = outputs[0]["generated_text"][len(prompt):].strip()
-            # 补充Final Answer格式（若模型遗漏）
-            if "Final Answer:" not in response:
-                num_match = re.search(r'\d+(?:\.\d+)?', response)
-                if num_match:
-                    response += f"\nFinal Answer: {num_match.group()}"
             return response
             
         except Exception as e:
@@ -99,16 +62,11 @@ Step-by-step reasoning:"""
             return f"Error: {str(e)}"
     
     def extract_numeric_answer(self, response):
-        """从响应中提取数字答案（优先Final Answer）"""
-        # 优先提取Final Answer后的数字
-        final_answer_pattern = r'Final Answer:\s*(\d+(?:\.\d+)?)'
-        match = re.search(final_answer_pattern, response)
-        if match:
-            return match.group(1)
-        
-        # 备选：提取所有数字，返回最后一个
+        """从响应中提取数字答案"""
+        # 提取所有数字
         numbers = re.findall(r'\d+(?:\.\d+)?', response)
         if numbers:
+            # 返回最后出现的数字（通常是最终答案）
             return numbers[-1]
         
         return None
@@ -147,7 +105,6 @@ Step-by-step reasoning:"""
         }
         
         print(f"开始评估，共{len(df)}条样本...")
-        print("提示词已加入4个GSM8K正负样例，强化分步计算和错误规避")
         
         # 逐样本评估
         for idx, row in tqdm(df.iterrows(), total=len(df), desc="评估进度"):

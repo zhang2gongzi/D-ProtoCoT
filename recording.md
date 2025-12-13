@@ -15,4 +15,6 @@ sc采样：5条
 |ccot|64.4|87.0|64.4|
 |dpro||78.2||
 |Qwen3-8B|commonsenseqa| gsm8k | strategyqa|
-|standard|76.6|90.4|66.8|
+|standard|75.6|90.4|66.8|
+|self-consistency|
+|dpro|76.6|
