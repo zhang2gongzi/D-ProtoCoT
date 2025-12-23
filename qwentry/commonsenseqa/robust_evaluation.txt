@@ -1,0 +1,6 @@
+Robust Evaluation Results
+JSON: /root/autodl-tmp/ProtoCoT/qwentry/commonsenseqa/commonsenseqa_500_cot_qwen3.json
+Total valid samples: 407
+Self-Consistency: 87.71%
+D-ProtoCoT: 86.98%
+Oracle: 88.45%
