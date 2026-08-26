@@ -1,0 +1,21 @@
+{
+  "train_path": "newrundata/gsm8k_merged_flat.jsonl",
+  "test_path": "newrundata/gsm8k_test_flat.jsonl",
+  "epochs": 10,
+  "seed": 42,
+  "results": [
+    {
+      "mode": "newline",
+      "test_questions": 200,
+      "selected_accuracy_pct": 79.5,
+      "avg_steps_per_path": 13.033
+    },
+    {
+      "mode": "step_marker",
+      "test_questions": 200,
+      "selected_accuracy_pct": 82.0,
+      "avg_steps_per_path": 2.7655
+    }
+  ],
+  "delta_step_marker_minus_newline": 2.5
+}
