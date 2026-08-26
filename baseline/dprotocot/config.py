@@ -24,12 +24,14 @@ from typing import Optional
 @dataclass
 class Config:
     # ---- paths (overridable via CLI; see run.py) ----
-    bert_model: str = "${MODEL_DIR}/bert-base-uncased"
+    # bert_model defaults to the Hugging Face id; pass --bert_model or set
+    # $BERT_MODEL / $MODEL_DIR to point at a local checkpoint.
+    bert_model: str = os.environ.get("BERT_MODEL", "bert-base-uncased")
     # A single flat jsonl that will be split by question, OR a train/test pair.
-    data_path: str = "${PROJECT_ROOT}/data/strategyqa_flat_labeled.jsonl"
+    data_path: str = "data/strategyqa_flat_labeled.jsonl"
     train_path: Optional[str] = None   # if set, use official split (train_path + test_path)
     test_path: Optional[str] = None
-    output_dir: str = "${PROJECT_ROOT}/dprotocot_runs/run"
+    output_dir: str = "outputs/run"
 
     # ---- reasoning-path field names (adjust here if your jsonl differs) ----
     f_raw: str = "raw_example"
@@ -53,6 +55,7 @@ class Config:
     chunk_size: int = 400
     chunk_overlap: int = 50
     step_delimiter: str = "\n"
+    step_segmentation: str = "newline"   # "newline" (split on step_delimiter) or "step_marker" (split on `Step \d+:`)
     pool: str = "mean"               # question / path pooling over content tokens
 
     # ---- training ----
@@ -81,4 +84,5 @@ class Config:
         assert self.input_mode in {"full", "mask", "qa_only"}
         assert self.train_repr in {"step", "path"}
         assert self.select_repr in {"step", "path"}
+        assert self.step_segmentation in {"newline", "step_marker"}
         return self
