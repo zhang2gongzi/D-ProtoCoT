@@ -18,6 +18,7 @@ Everything is differentiable, so the same code is used at train and eval time.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import re
 from transformers import BertModel, BertTokenizerFast
 
 from config import Config
@@ -91,16 +92,28 @@ class MultiGranularEncoder(nn.Module):
         offsets = enc["offset_mapping"]  # list of (char_start, char_end) per token
         token_hidden = self._token_hidden(ids)  # [T, H]
 
-        # map '\n'-delimited steps to character spans
-        step_spans, pos = [], 0
-        for seg in text.split(self.cfg.step_delimiter):
-            start = pos
-            end = pos + len(seg)
-            if seg.strip():
-                step_spans.append((start, end))
-            pos = end + len(self.cfg.step_delimiter)
-        if not step_spans:
-            step_spans = [(0, len(text))]
+        # map steps to character spans
+        if self.cfg.step_segmentation == "step_marker":
+            pat = re.compile(r"Step\s+\d+\s*[:.)]")
+            matches = list(pat.finditer(text))
+            step_spans = []
+            for i, m in enumerate(matches):
+                start = m.end()
+                end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+                if text[start:end].strip():
+                    step_spans.append((start, end))
+            if not step_spans:
+                step_spans = [(0, len(text))] if text.strip() else []
+        else:
+            step_spans, pos = [], 0
+            for seg in text.split(self.cfg.step_delimiter):
+                start = pos
+                end = pos + len(seg)
+                if seg.strip():
+                    step_spans.append((start, end))
+                pos = end + len(self.cfg.step_delimiter)
+            if not step_spans:
+                step_spans = [(0, len(text))]
 
         step_embs = []
         for (cs, ce) in step_spans:
