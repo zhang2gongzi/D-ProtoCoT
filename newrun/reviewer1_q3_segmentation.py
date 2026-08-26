@@ -60,6 +60,8 @@ def build_cfg(args, mode: str) -> Config:
     cfg.k_paths = args.k_paths
     cfg.step_segmentation = mode              # "newline" or "step_marker"
     cfg.output_dir = os.path.join("outputs", f"r1q3_seg_{mode}")
+    if args.bert_model:
+        cfg.bert_model = args.bert_model
     if args.device:
         cfg.device = args.device
     return cfg.resolve()
@@ -126,6 +128,8 @@ def run_mode(args, mode: str) -> dict:
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--bert_model", default=None,
+                    help="local path to BERT checkpoint (e.g. /home2/zzl/model/bert-base-uncased)")
     ap.add_argument("--train_path", default="newrundata/gsm8k_merged_flat.jsonl")
     ap.add_argument("--test_path",  default="newrundata/gsm8k_test_flat.jsonl")
     ap.add_argument("--epochs", type=int, default=10)
