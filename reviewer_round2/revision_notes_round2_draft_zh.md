@@ -7,7 +7,7 @@
 
 尊敬的编辑和审稿人：
 
-诚挚感谢编辑做出的"小修后接收"（accept with minor revisions）决定，以及审稿人在第二轮审阅中的仔细阅读和建设性反馈。我们之前对第一轮意见的修订（步级监督过度声称、数据集使用、ORM 结果、主表/消融一致性、评估规模有限和基线过时）已令审稿人满意。
+诚挚感谢编辑做出"小修后接收"（accept with minor revisions）的决定。编辑和审稿人在第一轮给的方向性指引塑造了我们的修订，使论文达到当前改进的状态。之前第一轮的几点意见（步级监督过度声称、数据集使用、ORM 结果、主表/消融一致性、评估规模有限和基线过时）已令审稿人满意。
 
 我们非常感谢审稿人 1 和审稿人 3 提出的剩余问题，这些问题帮助我们进一步提升了稿件的清晰度和稳健性。下面逐条回复，并说明对论文的相应修改。
 
@@ -58,7 +58,7 @@
 
 1. **CommonsenseQA/Qwen3-8B。** 原版报 D-ProtoCoT 87.71、SC 86.98。统一 pipeline（重生路径池、`qid` 分组零跨切分重叠、10 epoch）下变为 D-ProtoCoT 70.00、SC 62.00。CSQA/LLaMA 同协议重跑以保一致。
 2. **GSM8K/LLaMA-3.1-8B-Instruct。** 原版用 42 题内部切分（8:1:1 over 内部池），而正文写 1000 题/数据集。换成官方 GSM8K test 集（n=200）+ per-backbone `qid` 分组零跨切分重叠切分。Std CoT 该列相应从 43.80→71.50（D-ProtoCoT 80.95→80.00）。
-3. **StrategyQA。** 原版答案抽取器无法解析模型的 `\boxed{yes/no}` 包裹。原版抽取器下 per-path 正确率 28.5%，修复后 46.8%。重抽+统一 pipeline 重跑后，D-ProtoCoT 66.67、C-CoT 76.81。
+3. **StrategyQA。** 原版答案抽取器无法解析模型的 `[yes/no]` 包裹。原版抽取器下 per-path 正确率 28.5%，修复后 46.8%。重抽+统一 pipeline 重跑后，D-ProtoCoT 66.67、C-CoT 76.81。
 
 其他基线行（SC、ORM、Static-Prototype）作为重生路径池、修复的抽取器、per-backbone `qid` 分组 test 切分的累积后果而变动。不逐格归因单一原因，报这些纠正的累积效应。Qwen3-14B 列和 Self-Certainty 行是本轮新增（审稿人 3 意见 1、2），非已有数字重跑。
 
@@ -90,13 +90,11 @@ Table 5 报的切分大小因此反映这些 per-backbone 池大小；8:1:1 切�
 
 另外，各 backbone 池内只有既含正例又含负例的题参与对比训练；这种 trainable 题数也跨 backbone 不同（CSQA：Qwen 289 vs LLaMA 200），反映 per-path 正确率差异。这影响训练 batch 组成，但不影响 Table 5 报的切分大小。
 
-**改动：** 重写 §4.1 该句。原句：
+**改动：** 重写 §4.1 该句——原句替换如下：
 
-> *[旧]* (§4.1)："...we report results on the question-grouped held-out split described above (a standard practice under this constraint); the two backbone models share the same held-out question set so that per-model results remain directly comparable."
-
-替换为：
-
-> **[新]** (§4.1)："...we report results on the question-grouped held-out split described above (a standard practice under this constraint). **Each backbone is processed independently: reasoning paths are sampled separately per backbone, and the question-grouped 8:1:1 split is applied to that backbone's available question pool. Split sizes therefore differ across backbones (Table 5), reflecting differences in the per-backbone path pools. All splits obey the same grouping and zero-overlap protocol, so per-model results remain directly comparable under a consistent evaluation protocol.**"
+| # | 位置 | 修改前（原版） | 修改后（修订） |
+|---|---|---|---|
+| 1 | §4.1（Datasets and Data Splits，held-out evaluation） | "...we report results on the question-grouped held-out split described above (a standard practice under this constraint); the two backbone models share the same held-out question set so that per-model results remain directly comparable." | "...we report results on the question-grouped held-out split described above (a standard practice under this constraint). **Each backbone is processed independently: reasoning paths are sampled separately per backbone, and the question-grouped 8:1:1 split is applied to that backbone's available question pool. Split sizes therefore differ across backbones (Table 5), reflecting differences in the per-backbone path pools. All splits obey the same grouping and zero-overlap protocol, so per-model results remain directly comparable under a consistent evaluation protocol.**" |
 
 ---
 
@@ -114,9 +112,11 @@ Table 5 报的切分大小因此反映这些 per-backbone 池大小；8:1:1 切�
 
 **边界情况。** GSM8K/Qwen3-8B 池中约 1.5% 路径无显式 `Step N:` 标记；`Step k:` 方案下这些路径当作单步（整条路径），这是自然回退。影响少量训练样本，不改变结论。
 
+**为什么只在 GSM8K 上做对比。** `Step k:` 方案只在路径实际含显式 `Step N:` 标记时才有意义。我们查了全部 6 个 8B 路径池：只有 GSM8K 路径可靠地使用此类标记（LLaMA-3.1-8B-Instruct：96.9% 路径含标记；Qwen3-8B：69.7%）。在 CommonsenseQA 和 StrategyQA 上，采样路径是自由散文式推理，无 `Step N:` 标记——CSQA/Qwen3-8B：99.9% 路径无标记；StrategyQA/Qwen3-8B：99.6%；CSQA/LLaMA-3.1-8B-Instruct：87.8%；StrategyQA/LLaMA-3.1-8B-Instruct：61.1%。在这些数据集上，`Step k:` 切分会把绝大多数路径当作单步，退化成 path-level 而非 step-level，无法做有意义的切分方式对比。论文全程使用 newline 切分，正是因为它具有跨数据集通用性：所有 backbone、所有数据集的路径都含换行，而 `Step N:` 标记是格式特定特征，只在 GSM8K 上出现。因此 GSM8K 是唯一能测切分方式选择的数据集，而在该数据集上方法对切法选择稳健。
+
 **改动：** §5.3（Effect of Representation Granularity）加一小段报换行 vs `Step k:` 切步对比。加进正文的全文：
 
-> **[新]** (§5.3, Step-Delimiter Robustness)："The step-level segmentation used throughout this paper is based on newline delimiters. A natural concern is that newline splitting may cut a step in half or merge steps, altering the step-level training signal. To check robustness to this choice, we re-segmented the GSM8K / Qwen3-8B training paths using explicit `Step N:` markers as boundaries and retrained the encoder under otherwise-identical settings (10 epochs, K=10, seed 42, n=200 official test questions). The two schemes yield substantially different granularity—13.03 vs. 2.77 steps per path on average—yet test-time selection accuracy differs by only 2.50 points (79.50% for newline vs. 82.00% for `Step N:`), within the run-to-run variance already documented for this setting (Table 1 reports 82.00% and Table 5 reports 84.50% for the same configuration, a 2.50-point gap attributed to training stochasticity). The method is therefore robust to the choice of step delimiter."
+> **[新]** (§5.3, Step-Delimiter Robustness)："The step-level segmentation used throughout this paper is based on newline delimiters, which are universally applicable across all benchmarks and backbones, whereas explicit `Step N:` markers appear only in GSM8K paths. A natural concern is that newline splitting may cut a step in half or merge steps, altering the step-level training signal. To check robustness to this choice, we re-segmented the GSM8K / Qwen3-8B training paths using explicit `Step N:` markers as boundaries and retrained the encoder under otherwise-identical settings (10 epochs, K=10, seed 42, n=200 official test questions). The two schemes yield substantially different granularity—13.03 vs. 2.77 steps per path on average—yet test-time selection accuracy differs by only 2.50 points (79.50% for newline vs. 82.00% for `Step N:`), within the run-to-run variance already documented for this setting (Table 1 reports 82.00% and Table 3 reports 84.50% for the same configuration, a 2.50-point gap attributed to training stochasticity). The method is therefore robust to the choice of step delimiter."
 
 pipeline 其他部分不变。
 
@@ -132,25 +132,13 @@ pipeline 其他部分不变。
 
 **改动：** 对正文做了完整语法 pass。具体修复如下：
 
-1. **§2.2 — 冗余子句。** 一句重复了"propagates ... to every step"（前句已说），收紧。
-   > *[旧]*："As a result, D-ProtoCoT propagates the outcome-derived signal to every step, providing denser step-level supervision than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels."
-   > **[新]**："As a result, D-ProtoCoT provides denser step-level supervision than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels."
-
-2. **§3.5 — 显示公式附近的标点。** 原文句子与公式连成一句，缺标点衔接；加冒号、公式末尾句号改逗号，使正文与公式正确衔接。
-   > *[旧]*："The best reasoning path is selected by maximizing the alignment score \[c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i.\] and the final answer is extracted from $c^{*}$."
-   > **[新]**："The best reasoning path is selected by maximizing the alignment score: \[c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i,\] and the final answer is extracted from $c^{*}$."
-
-3. **§4.2 — 破折号用法。** 单连字符当破折号用，改为 em-dash，与全文一致。
-   > *[旧]*："two instruction-tuned LLMs - LLaMA-3.1-8B-Instruct and Qwen3-8B"
-   > **[新]**："two instruction-tuned LLMs---LLaMA-3.1-8B-Instruct and Qwen3-8B"
-
-4. **§5.5 — 生硬措辞。** "in comparison to" 改为 "compared to"，去掉多余逗号。
-   > *[旧]*："...the performance gap between self-consistency and D-ProtoCoT is modest, in comparison to weaker backbone models."
-   > **[新]**："...the performance gap between self-consistency and D-ProtoCoT is modest compared to weaker backbone models."
-
-5. **Limitations — 冗余措辞。** "the AUC-of-$0.78$ evidence ... is the empirical evidence of what the representation does capture" 改写，去掉重复名词和生硬连字符。
-   > *[旧]*："...the AUC-of-$0.78$ evidence reported in Section~\ref{sec:analysis} is the empirical evidence of what the representation does capture under this labeling scheme..."
-   > **[新]**："...the AUC of $0.78$ reported in Section~\ref{sec:analysis} empirically shows what the representation does capture under this labeling scheme..."
+| # | 位置 | 问题 | 修改前（原版） | 修改后（修订） |
+|---|---|---|---|---|
+| 1 | §2.2（Reasoning Path Selection and Verification） | 冗余子句（重复了前句的"propagates ... to every step"） | "As a result, D-ProtoCoT propagates the outcome-derived signal to every step, providing denser step-level supervision than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels." | "As a result, D-ProtoCoT **provides denser step-level supervision** than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels." |
+| 2 | §3.5（Prototype-Based Alignment and Path Selection） | 显示公式附近标点：句子与公式连成一句，缺衔接；加冒号、公式末尾句号改逗号 | "The best reasoning path is selected by maximizing the alignment score $c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i$ and the final answer is extracted from $c^{*}$." | "The best reasoning path is selected by maximizing the alignment score**:** $c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i$**,** and the final answer is extracted from $c^{*}$." |
+| 3 | §4.2（Backbone Models） | 破折号用法：单连字符当破折号，改为 em-dash，与全文一致 | "two instruction-tuned LLMs **-** LLaMA-3.1-8B-Instruct and Qwen3-8B" | "two instruction-tuned LLMs**---**LLaMA-3.1-8B-Instruct and Qwen3-8B" |
+| 4 | §5.5（Impact of Backbone Model Strength） | 生硬措辞："in comparison to" 改为 "compared to"，去掉多余逗号 | "...the performance gap between self-consistency and D-ProtoCoT is modest**,** in comparison to weaker backbone models." | "...the performance gap between self-consistency and D-ProtoCoT is modest **compared to** weaker backbone models." |
+| 5 | Limitations（第二条 limitation） | 冗余措辞："the AUC-of-$0.78$ evidence ... is the empirical evidence" 改写，去掉重复名词和生硬连字符 | "...the AUC-of-$0.78$ evidence reported in Section 5 is the empirical evidence of what the representation does capture under this labeling scheme..." | "...the AUC of $0.78$ reported in Section 5 **empirically shows** what the representation does capture under this labeling scheme..." |
 
 ---
 
