@@ -1,4 +1,4 @@
-# Response to Reviewers' Comments (Round 2)
+# Response to Reviewers' Comments
 
 **Manuscript ID:** NEUCOM-D-26-09063R1  
 **Title:** D-ProtoCoT: Prototype-Based Path Selection for Chain-of-Thought Reasoning  
@@ -8,7 +8,7 @@ August 27, 2026
 
 Dear editors and reviewers,
 
-We sincerely thank the editors for the decision to accept the paper with minor revisions, and the reviewers for their careful reading and constructive feedback in this second round of review. We are glad that our previous revisions have satisfactorily addressed the Round-1 concerns regarding overclaimed step-level supervision, dataset usage, ORM results, main/ablation consistency, and the limited evaluation scale and outdated baselines.
+We sincerely thank the editors for the decision to accept the paper with minor revisions. The direction provided by the editor and the reviewers in the first round shaped our revision and brought the paper to its current, improved state. We are glad that those Round-1 concerns (overclaimed step-level supervision, dataset usage, ORM results, main/ablation consistency, and the limited evaluation scale and outdated baselines) have been satisfactorily addressed.
 
 We greatly appreciate the remaining points raised by Reviewer 1 and Reviewer 3, which have helped us further improve the clarity and robustness of the manuscript. Below, we provide a point-by-point response to these comments and detail the corresponding revisions made to the paper.
 
@@ -91,13 +91,11 @@ The split sizes reported in Table~\ref{tab:dataset-details} therefore reflect th
 
 Separately, within each backbone's pool, only questions with both correct and incorrect sampled paths contribute to contrastive training; the number of such trainable questions also varies across backbones (CommonsenseQA: $289$ for Qwen3-8B vs $200$ for LLaMA-3.1-8B-Instruct), reflecting differences in per-path correctness rates. This affects training-batch composition but not the split sizes reported in Table~\ref{tab:dataset-details}.
 
-**Change made.** Reworded the §4.1 sentence. The original sentence read:
+**Change made.** Reworded the §4.1 sentence — the original has been replaced as follows:
 
-> *[Old]* (§4.1): "...we report results on the question-grouped held-out split described above (a standard practice under this constraint); the two backbone models share the same held-out question set so that per-model results remain directly comparable."
-
-It is replaced by:
-
-> **[New]** (§4.1): "...we report results on the question-grouped held-out split described above (a standard practice under this constraint). Each backbone is processed independently: reasoning paths are sampled separately per backbone, and the question-grouped $8{:}1{:}1$ split is applied to that backbone's available question pool. Split sizes therefore differ across backbones (Table~\ref{tab:dataset-details}), reflecting differences in the per-backbone path pools. All splits obey the same grouping and zero-overlap protocol, so per-model results remain directly comparable under a consistent evaluation protocol."
+| # | Location | Before (original) | After (revised) |
+|---|---|---|---|
+| 1 | §4.1 (Datasets and Data Splits, held-out evaluation) | "...we report results on the question-grouped held-out split described above (a standard practice under this constraint); the two backbone models share the same held-out question set so that per-model results remain directly comparable." | "...we report results on the question-grouped held-out split described above (a standard practice under this constraint). **Each backbone is processed independently: reasoning paths are sampled separately per backbone, and the question-grouped $8{:}1{:}1$ split is applied to that backbone's available question pool. Split sizes therefore differ across backbones (Table~\ref{tab:dataset-details}), reflecting differences in the per-backbone path pools. All splits obey the same grouping and zero-overlap protocol, so per-model results remain directly comparable under a consistent evaluation protocol.**" |
 
 ---
 
@@ -133,25 +131,13 @@ No other parts of the pipeline change.
 
 **Change made.** Performed a full grammatical pass over the manuscript. The specific fixes are:
 
-1. **§2.2 — redundant clause.** A sentence that repeated "propagates ... to every step" (already stated in the preceding sentence) is tightened.
-   > *[Old]*: "As a result, D-ProtoCoT propagates the outcome-derived signal to every step, providing denser step-level supervision than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels."
-   > **[New]**: "As a result, D-ProtoCoT provides denser step-level supervision than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels."
-
-2. **§3.5 — punctuation around a display equation.** The sentence and equation run together as one sentence; a colon is added and the equation's trailing period changed to a comma so that the prose continues correctly.
-   > *[Old]*: "The best reasoning path is selected by maximizing the alignment score \[c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i.\] and the final answer is extracted from $c^{*}$."
-   > **[New]**: "The best reasoning path is selected by maximizing the alignment score: \[c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i,\] and the final answer is extracted from $c^{*}$."
-
-3. **§4.2 — dash usage.** A single hyphen used as a dash is replaced with an em-dash, consistent with the rest of the manuscript.
-   > *[Old]*: "two instruction-tuned LLMs - LLaMA-3.1-8B-Instruct and Qwen3-8B"
-   > **[New]**: "two instruction-tuned LLMs---LLaMA-3.1-8B-Instruct and Qwen3-8B"
-
-4. **§5.5 — awkward phrasing.** "in comparison to" is replaced with "compared to", and an extraneous comma is removed.
-   > *[Old]*: "...the performance gap between self-consistency and D-ProtoCoT is modest, in comparison to weaker backbone models."
-   > **[New]**: "...the performance gap between self-consistency and D-ProtoCoT is modest compared to weaker backbone models."
-
-5. **Limitations — redundant phrasing.** "the AUC-of-$0.78$ evidence ... is the empirical evidence of what the representation does capture" is rewritten to remove the repeated noun and the awkward hyphenation.
-   > *[Old]*: "...the AUC-of-$0.78$ evidence reported in Section~\ref{sec:analysis} is the empirical evidence of what the representation does capture under this labeling scheme..."
-   > **[New]**: "...the AUC of $0.78$ reported in Section~\ref{sec:analysis} empirically shows what the representation does capture under this labeling scheme..."
+| # | Location | Issue | Before (original) | After (revised) |
+|---|---|---|---|---|
+| 1 | §2.2 (Reasoning Path Selection and Verification) | Redundant clause (repeats "propagates ... to every step" from the preceding sentence) | "As a result, D-ProtoCoT propagates the outcome-derived signal to every step, providing denser step-level supervision than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels." | "As a result, D-ProtoCoT **provides denser step-level supervision** than outcome-level objectives at the same annotation cost---though, unlike PRMs, without step-level correctness labels." |
+| 2 | §3.5 (Prototype-Based Alignment and Path Selection) | Punctuation around a display equation: the sentence and equation run together; a colon is added and the equation's trailing period changed to a comma | "The best reasoning path is selected by maximizing the alignment score \[c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i.\] and the final answer is extracted from $c^{*}$." | "The best reasoning path is selected by maximizing the alignment score**:** \[c^{*} = \arg\max_{c_i \in \mathcal{C}} a_i**,**\] and the final answer is extracted from $c^{*}$." |
+| 3 | §4.2 (Backbone Models) | Dash usage: a single hyphen used as a dash is replaced with an em-dash, consistent with the rest of the manuscript | "two instruction-tuned LLMs **-** LLaMA-3.1-8B-Instruct and Qwen3-8B" | "two instruction-tuned LLMs**---**LLaMA-3.1-8B-Instruct and Qwen3-8B" |
+| 4 | §5.5 (Impact of Backbone Model Strength) | Awkward phrasing: "in comparison to" → "compared to", and an extraneous comma removed | "...the performance gap between self-consistency and D-ProtoCoT is modest**,** in comparison to weaker backbone models." | "...the performance gap between self-consistency and D-ProtoCoT is modest **compared to** weaker backbone models." |
+| 5 | Limitations (Second limitation) | Redundant phrasing: "the AUC-of-$0.78$ evidence ... is the empirical evidence" rewritten to remove the repeated noun and the awkward hyphenation | "...the AUC-of-$0.78$ evidence reported in Section~\ref{sec:analysis} is the empirical evidence of what the representation does capture under this labeling scheme..." | "...the AUC of $0.78$ reported in Section~\ref{sec:analysis} **empirically shows** what the representation does capture under this labeling scheme..." |
 
 ---
 
